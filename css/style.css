@@ -6,9 +6,15 @@ body {
 }
 
 .containerDiv {
-  float: right;
-  width: 50%;
+  position: absolute;
+  width: 100%;
   height: 100%;
+}
+
+#sceneviewDiv {
+  width: 30vw;
+  height: 30vw;
+  right: 0;
 }
 
 #title {
