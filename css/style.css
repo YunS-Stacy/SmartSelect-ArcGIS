@@ -1,16 +1,14 @@
 html,
-body,
-#viewDiv {
+body {
   padding: 0;
   margin: 0;
   height: 100%;
-  width: 100%;
 }
 
-#containerDiv {
-  background-color: white;
-  padding: 3px;
-  text-align: center;
+.containerDiv {
+  float: right;
+  width: 50%;
+  height: 100%;
 }
 
 #title {
