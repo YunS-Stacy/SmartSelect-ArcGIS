@@ -8,6 +8,8 @@ require([
 
   'esri/layers/FeatureLayer',
   'esri/renderers/SimpleRenderer',
+  'esri/symbols/PolygonSymbol3D',
+  'esri/symbols/ExtrudeSymbol3DLayer',
   'esri/renderers/ClassBreaksRenderer',
   'esri/symbols/SimpleFillSymbol',
   'esri/renderers/smartMapping/statistics/classBreaks',
@@ -21,6 +23,8 @@ require([
   FeatureLayer,
   // vacant parcel
   SimpleRenderer,
+  PolygonSymbol3D,
+  ExtrudeSymbol3DLayer,
   // parcel layer
   ClassBreaksRenderer, SimpleFillSymbol, classBreaks,
   // ui
@@ -29,12 +33,12 @@ require([
   // basic setting
   var map = new Map({
     basemap: 'topo',
-    ground: 'world-elevation'
+    ground: 'world-elevation',
   });
 
   var sceneMap = new Map({
     basemap: 'hybrid',
-    ground: 'world-elevation'
+    ground: 'world-elevation',
   });
 
   // define renderer for vacant layer
@@ -56,6 +60,53 @@ require([
   });
   // add the layer
   sceneMap.add(vacantparcelLyr);
+
+  // define renderer for building layer
+  var bldgRenderer = new SimpleRenderer({
+    symbol: new PolygonSymbol3D({
+      symbolLayers: [new ExtrudeSymbol3DLayer()]  // creates volumetric symbols for polygons that can be extruded
+    }),
+    visualVariables: [{
+      type: 'size',
+      field: 'MAX_HGT',
+      valueUnit: 'feet'
+    }, {
+      type: 'color',
+      field: 'MAX_HGT',
+      valueUnit: 'feet',
+      stops: [
+        {
+          value: 0,
+          color: 'rgba(255, 255, 255, 0.9)',
+        },
+        // 100 meter as high-rise
+        {
+          value: 328.084,
+          color: 'rgba(251, 178, 23, 0.9)',
+        }
+      ]
+    }]
+  });
+  // import hosted layer and the fields to be used in the 3D scene
+  var bldgLyr = new FeatureLayer({
+    // url: 'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0',
+    // 5000 max per time
+    url:'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0/query?outFields=MAX_HGT&resultRecordCount=5000',
+    renderer: bldgRenderer,
+    maxScale: 0,
+    minScale: 0,
+  });
+  // var bldgLyr1 = new FeatureLayer({
+  //   // url: 'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0',
+  //   url:'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0/query?outFields=MAX_HGT&resultOffset=5000&resultRecordCount=5000',
+  //   renderer: bldgRenderer,
+  //   maxScale: 0,
+  //   minScale: 0,
+  // });
+  // sceneMap.add(bldgLyr1);
+
+  // add the layer
+  sceneMap.add(bldgLyr);
 
   // define renderer for parcel layer
   var parcelRenderer = new ClassBreaksRenderer({
@@ -197,11 +248,11 @@ require([
 
 
   // after map has the layer info, create the 3D scene view
-  var sceneView = new MapView({
+  var sceneView = new SceneView({
     container: 'sceneviewDiv',
     map: sceneMap,
     scale: 5000,
-    center: [-75.204117, 39.961009]
+    center: [-75.16256149898815, 39.982102298576656],
   });
 
   sceneView.then(function() {
@@ -228,7 +279,7 @@ require([
     container: 'mapviewDiv',
     map: map,
     scale: 5000,
-    center: [-75.204117, 39.961009]
+    center: [-75.16256149898815, 39.982102298576656],
   });
 
   mapView.then(function() {
@@ -252,6 +303,7 @@ require([
       x: evt.x,
       y: evt.y
     };
+    console.log(evt);
     mapView.popup.watch('visible', function(visible) {
       console.log('popup visible: ', visible);
     });
