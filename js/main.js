@@ -4,67 +4,51 @@ require([
 
   'esri/views/MapView',
   'esri/views/SceneView',
+  // sync views
   'esri/core/watchUtils',
-
+  // layer type
   'esri/layers/FeatureLayer',
+  // data visualization
   'esri/renderers/SimpleRenderer',
+  'esri/renderers/ClassBreaksRenderer',
+  "esri/renderers/smartMapping/creators/size",
+  'esri/renderers/smartMapping/statistics/classBreaks',
+  'esri/renderers/smartMapping/statistics/histogram',
   'esri/symbols/PolygonSymbol3D',
   'esri/symbols/ExtrudeSymbol3DLayer',
-  'esri/renderers/ClassBreaksRenderer',
   'esri/symbols/SimpleFillSymbol',
-  'esri/renderers/smartMapping/statistics/classBreaks',
-
+  // widgets
   'esri/widgets/Legend',
+  'esri/widgets/Zoom',
+  'esri/widgets/Compass',
+  'esri/widgets/ScaleBar',
+  'esri/widgets/Search',
+  'esri/widgets/Locate',
+  'esri/widgets/LayerList',
+  'esri/widgets/SizeSlider',
+  'esri/widgets/BasemapToggle',
+
+  'esri/core/lang',
+  'dojo/on',
   'dojo/domReady!'
 ], function(
   // basemap
   Map, MapView, SceneView, watchUtils,
-  // layer
   FeatureLayer,
-  // vacant parcel
-  SimpleRenderer,
-  PolygonSymbol3D,
-  ExtrudeSymbol3DLayer,
-  // parcel layer
-  ClassBreaksRenderer, SimpleFillSymbol, classBreaks,
-  // ui
-  Legend,
+  SimpleRenderer, ClassBreaksRenderer, sizeRendererCreator, classBreaks, histogram,
+  PolygonSymbol3D, ExtrudeSymbol3DLayer, SimpleFillSymbol,
+  // widgets
+  Legend, Zoom, Compass, ScaleBar, Search, Locate, LayerList, SizeSlider, BasemapToggle,
+  lang, on
 ){
-  // basic setting
-  var map = new Map({
-    basemap: 'topo',
-    ground: 'world-elevation',
-  });
+  // import all layers to be used in the app
 
-  var sceneMap = new Map({
-    basemap: 'hybrid',
-    ground: 'world-elevation',
-  });
-
-  // define renderer for vacant layer
-  var vacantparcelRenderer = new SimpleRenderer({
-    symbol: new SimpleFillSymbol({
-      color: 'rgba(172, 172, 172, 0.7)',
-      style: 'solid',
-      outline: {
-        width: 0.3,
-        color: 'red'
-      }
-    }),
-    label: 'Vacant Parcel'
-  });
-  // import hosted layer and the fields to be used in the 3D scene
-  var vacantparcelLyr = new FeatureLayer({
-    url: 'https://services7.arcgis.com/RlQc2aMJR16YTTNE/arcgis/rest/services/vacantparcel/FeatureServer/0',
-    renderer: vacantparcelRenderer,
-  });
-  // add the layer
-  sceneMap.add(vacantparcelLyr);
-
-  // define renderer for building layer
+  // 3D scene map
+  // buidling layer - 3D scene
+  // define renderer
   var bldgRenderer = new SimpleRenderer({
     symbol: new PolygonSymbol3D({
-      symbolLayers: [new ExtrudeSymbol3DLayer()]  // creates volumetric symbols for polygons that can be extruded
+      symbolLayers: [new ExtrudeSymbol3DLayer()]
     }),
     visualVariables: [{
       type: 'size',
@@ -87,12 +71,13 @@ require([
       ]
     }]
   });
-  // import hosted layer and the fields to be used in the 3D scene
+  // import hosted layer and the fields to be used
   var bldgLyr = new FeatureLayer({
     // url: 'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0',
     // 5000 max per time
     url:'https://services.arcgis.com/fLeGjb7u4uXqeF9q/ArcGIS/rest/services/LI_BUILDING_FOOTPRINTS/FeatureServer/0/query?outFields=MAX_HGT&resultRecordCount=5000',
     renderer: bldgRenderer,
+    // change the scale default in PHL open data
     maxScale: 0,
     minScale: 0,
   });
@@ -103,12 +88,35 @@ require([
   //   maxScale: 0,
   //   minScale: 0,
   // });
-  // sceneMap.add(bldgLyr1);
 
-  // add the layer
-  sceneMap.add(bldgLyr);
+  // define 3d scene map
+  var sceneMap = new Map({
+    basemap: 'hybrid',
+    ground: 'world-elevation',
+    layers: [bldgLyr]
+  });
 
-  // define renderer for parcel layer
+  // 2D map
+  // vacant layer - 2D map
+  // define renderer
+  var vacantparcelRenderer = new SimpleRenderer({
+    symbol: new SimpleFillSymbol({
+      color: 'rgba(172, 172, 172, 0.7)',
+      style: 'solid',
+      outline: {
+        width: 0.3,
+        color: 'red'
+      }
+    }),
+    label: 'Vacant Parcel'
+  });
+  // import hosted layer and the fields to be used
+  var vacantparcelLyr = new FeatureLayer({
+    url: 'https://services7.arcgis.com/RlQc2aMJR16YTTNE/arcgis/rest/services/vacantparcel/FeatureServer/0',
+    renderer: vacantparcelRenderer,
+  });
+  // parcel layer - 2D map
+  // define renderer
   var parcelRenderer = new ClassBreaksRenderer({
     field: 'refprice',
     defaultSymbol: new SimpleFillSymbol({
@@ -118,9 +126,9 @@ require([
         color: 'grey'
       }
     }),
-    defaultLabel: 'no data',
+    defaultLabel: 'Missing Data',
   });
-  // import hosted layer and the fields to be used in the popup (2D map)
+  // import hosted layer and the fields
   var parcelLyr = new FeatureLayer({
     url: 'https://services7.arcgis.com/RlQc2aMJR16YTTNE/arcgis/rest/services/finalparcel/FeatureServer/0',
     outFields: ['location', 'refprice'],
@@ -129,6 +137,7 @@ require([
       content: "<p>Address: {location}<br></br>Reference Price: ${refprice}<br></br><button class='mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored'><i class='material-icons'>add</i></button></p>",
       fieldInfos: [{
         fieldName: 'refprice',
+        label: 'Reference Price',
         format: {
           digitSeparator: true,
           places: 0
@@ -137,8 +146,6 @@ require([
     },
     renderer: parcelRenderer,
   });
-  // add the layer
-  map.add(parcelLyr);
 
   // define class break symbols
   var cl1 = new SimpleFillSymbol({
@@ -222,10 +229,8 @@ require([
     },
   });
   var arrCl = [cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, cl10]
-
-
   // classify the data by quantile
-  var quant = new classBreaks({
+  classBreaks({
     layer: parcelLyr,
     field: 'refprice',
     classificationMethod: 'quantile',
@@ -239,13 +244,17 @@ require([
     for (var i = 0; i < breaks.length; i++) {
       breaks[i].symbol = arrCl[i];
     };
-    // right: add one object a time
     _.each(breaks, function(datum){
       parcelRenderer.addClassBreakInfo(datum);
     })
-    // wrong: parcelRenderer.addClassBreakInfo(breaks);
   });
 
+  // define 2d map
+  var map = new Map({
+    basemap: 'topo',
+    ground: 'world-elevation',
+    layers: [parcelLyr, vacantparcelLyr]
+  });
 
   // after map has the layer info, create the 3D scene view
   var sceneView = new SceneView({
@@ -254,25 +263,19 @@ require([
     scale: 5000,
     center: [-75.16256149898815, 39.982102298576656],
   });
-
   sceneView.then(function() {
-    // get the first layer in the collection of operational layers in the WebMap
-    // when the resources in the sceneView have loaded.
-    var fl = sceneMap.layers.getItemAt(0);
-    // add the legend
-    var legend = new Legend({
-      view: sceneView,
-      layerInfos: [{
-        layer: fl,
-        title: 'Vacant Parcel'
-      }]
-    });
+    sceneView.ui.remove('attribution')
+    sceneView.ui.add([
+      {
+        component: new BasemapToggle({
+          view: sceneView,
+          nextBasemap: 'gray-vector',
+        }),
+        position: 'top-right',
+      }
+    ])
+  })
 
-
-    // Add widget to the bottom right corner of the view
-    sceneView.ui.add(legend, 'bottom-right');
-
-  });
 
   // after map has the layer info, create the 2D map view (main)
   var mapView = new MapView({
@@ -280,30 +283,106 @@ require([
     map: map,
     scale: 5000,
     center: [-75.16256149898815, 39.982102298576656],
+    components: ['attribution']
   });
 
   mapView.then(function() {
-    // get the first layer in the collection of operational layers in the WebMap
-    // when the resources in the MapView have loaded.
-    var fl = map.layers.getItemAt(0);
-    // add the legend
-    var legend = new Legend({
-      view: mapView,
-      layerInfos: [{
-        layer: fl,
-        title: 'Price Range'
-      }],
+    // manually construct to control the order
+    mapView.ui.empty('top-left');
+    // add the ui components
+    console.log('ready');
+    // configure slider
+    // configure params for size renderer generator
+    var sizeParams = {
+      layer: parcelLyr,
+      basemap: map.basemap,
+      field: "refprice",
+      legendOptions: {
+        title: "Query Slider"
+      },
+      minValue: 69100
+    };
+    // initialize slider params
+    var sliderParams = {
+      container: "slider"
+    };
+
+    //use sizeRendererCreator to configure slider stats and histogram
+    sizeRendererCreator.createContinuousRenderer(sizeParams)
+    .then(function(res) {
+      sliderParams.statistics = res.statistics;
+      sliderParams.visualVariable = lang.clone(res.visualVariables[0]);
+      return histogram({
+        layer: parcelLyr,
+        field: sizeParams.field,
+        minValue: sizeParams.minValue
+      });
+    })
+    .then(function(histogram) {
+      // when the promise resolves, set the histogram in the slider parameters
+      sliderParams.histogram = histogram;
+      // construct new sizeslider
+      sizeSlider = new SizeSlider(sliderParams);
+      mapView.ui.add([
+        {
+          component: new Search({ view: mapView }),
+          position: "top-left",
+          index: 0,
+        }, {
+          component: new Locate({ view: mapView }),
+          position: "top-left",
+          index: 1,
+        }, {
+          component: new Zoom({ view: mapView }),
+          position: "top-left",
+          index: 2,
+        }, {
+          component: new Compass({ view: mapView }),
+          position: "top-left",
+          index: 3,
+        }, {
+          component: new Legend({
+            view: mapView,
+            layerInfos: [{
+              // parcel layer
+              layer: map.layers.getItemAt(0),
+              title: 'Price Range'
+            }],
+          }),
+          position: "bottom-left",
+          index: 0,
+        }, {
+          component: 'sliderDiv',
+          position: "bottom-left",
+          index: 1,
+        }, {
+          component: new ScaleBar({
+            view: mapView,
+            unit: 'dual'
+          }),
+          position: "bottom-left",
+          index: 2,
+        },
+      ]);
+      mapView.ui.add("sliderDiv", "bottom-left");
+      // when the user slides the handle(s), update the renderer
+      // with the updated color visual variable object
+
+      // on(sizeSlider, "handle-value-change", function() {
+      //   var renderer = parcelLyr.renderer.clone();
+      //   renderer.visualVariables = [lang.clone(sizeSlider.visualVariable)];
+      //   parcelLyr.renderer = renderer;
+      // });
     });
-    // Add widget to the bottom right corner of the view
-    mapView.ui.add(legend, 'bottom-left');
+
 
   });
+
   mapView.on('click', function(evt){
     var screenPoint = {
       x: evt.x,
       y: evt.y
     };
-    console.log(evt);
     mapView.popup.watch('visible', function(visible) {
       console.log('popup visible: ', visible);
     });

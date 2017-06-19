@@ -12,17 +12,7 @@ body {
 }
 
 #sceneviewDiv {
-  width: 30vw;
-  height: 30vw;
+  width: 20vw;
+  height: 20vw;
   right: 0;
-}
-
-#title {
-  font-size: 14pt;
-  font-weight: 500;
-}
-
-.legend {
-  background-color: whitesmoke;
-  color: darkslategray;
 }
