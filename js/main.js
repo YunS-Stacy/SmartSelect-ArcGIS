@@ -352,7 +352,7 @@ require([
           position: "bottom-left",
           index: 0,
         }, {
-          component: 'sliderDiv',
+          component: sizeSlider,
           position: "bottom-left",
           index: 1,
         }, {
