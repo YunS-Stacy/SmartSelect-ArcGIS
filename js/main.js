@@ -328,12 +328,12 @@ require([
           view: mapView,
           unit: 'dual'
         }),
-        position: 'bottom-left',
-        index: 2,
+        position: 'bottom-right',
+        index: 0,
       },
     ]);
     // when slider range is changed, update the graphics shown in featurelayer (feature service directly)
-    on(sizeSlider, "handle-value-change', function() {
+    on(sizeSlider, 'handle-value-change', function() {
       parcelLyr.definitionExpression = 'refprice BETWEEN ' + sizeSlider.values[0] + ' AND ' + sizeSlider.values[1];
     });
   });

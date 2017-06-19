@@ -16,3 +16,7 @@ body {
   height: 20vw;
   right: 0;
 }
+
+.esri-ui-bottom-right {
+  right: 150px;
+}
