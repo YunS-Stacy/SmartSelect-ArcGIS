@@ -338,17 +338,17 @@ require([
     });
   });
 });
-
-mapView.on('click', function(evt){
-  var screenPoint = {
-    x: evt.x,
-    y: evt.y
-  };
-  mapView.popup.watch('visible', function(visible) {
-    console.log('popup visible: ', visible);
-  });
-
-});
+// 
+// mapView.on('click', function(evt){
+//   var screenPoint = {
+//     x: evt.x,
+//     y: evt.y
+//   };
+//   mapView.popup.watch('visible', function(visible) {
+//     console.log('popup visible: ', visible);
+//   });
+//
+// });
 
 /**
 * utility method that synchronizes the viewpoint of a view to other views
