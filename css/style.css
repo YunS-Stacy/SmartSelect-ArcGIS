@@ -20,3 +20,21 @@ body {
 .esri-ui-bottom-right {
   right: 150px;
 }
+
+.mdl-card {
+  float: right;
+  right: 20.5vw;
+}
+
+.mdl-card__title-text {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.mdl-card__supporting-text {
+  font-size: 12px;
+  line-height: 2em;
+  font-weight: 400;
+  padding: 0 0 0 30px;
+}

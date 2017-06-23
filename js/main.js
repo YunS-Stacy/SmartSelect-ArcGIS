@@ -8,9 +8,13 @@ require([
   'esri/core/watchUtils',
   // layer type
   'esri/layers/FeatureLayer',
+  'esri/layers/support/Field',
+  'esri/geometry/Point',
   // data visualization
   'esri/renderers/SimpleRenderer',
   'esri/renderers/ClassBreaksRenderer',
+  'esri/symbols/SimpleMarkerSymbol',
+
   'esri/renderers/smartMapping/creators/size',
   'esri/renderers/smartMapping/statistics/classBreaks',
   'esri/renderers/smartMapping/statistics/histogram',
@@ -30,16 +34,18 @@ require([
 
   'esri/core/lang',
   'dojo/on',
+  'dojo/dom',
   'dojo/domReady!'
 ], function(
   // basemap
   Map, MapView, SceneView, Camera, watchUtils,
-  FeatureLayer,
-  SimpleRenderer, ClassBreaksRenderer, sizeRendererCreator, classBreaks, histogram,
+  FeatureLayer, Field, Point,
+  SimpleRenderer, ClassBreaksRenderer, SimpleMarkerSymbol,
+  sizeRendererCreator, classBreaks, histogram,
   PolygonSymbol3D, ExtrudeSymbol3DLayer, SimpleFillSymbol,
   // widgets
   Legend, Zoom, Compass, ScaleBar, Search, Locate, LayerList, SizeSlider, BasemapToggle,
-  lang, on
+  lang, on, dom
 ){
   // import all layers to be used in the app
 
@@ -96,8 +102,6 @@ require([
     layers: [bldgLyr]
   });
 
-  // 2D map
-  // vacant layer - 2D map
   // define renderer
   var vacantparcelRenderer = new SimpleRenderer({
     symbol: new SimpleFillSymbol({
@@ -115,6 +119,8 @@ require([
     url: 'https://services7.arcgis.com/RlQc2aMJR16YTTNE/arcgis/rest/services/vacantparcel/FeatureServer/0',
     renderer: vacantparcelRenderer,
   });
+
+  // 2D map
   // parcel layer - 2D map
   // define renderer
   var parcelRenderer = new ClassBreaksRenderer({
@@ -123,21 +129,22 @@ require([
   // import hosted layer and the fields
   var parcelLyr = new FeatureLayer({
     url: 'https://services7.arcgis.com/RlQc2aMJR16YTTNE/arcgis/rest/services/finalparcel/FeatureServer/0',
-    outFields: ['location', 'refprice'],
+    outFields: ['location', 'refprice', 'zpid'],
     popupTemplate: {
       title: 'PARCEL INFO',
-      content: "<p>Address: {location}<br></br>Reference Price: ${refprice}</p>",
+      content: `<p>Address: {location}<br></br>Reference Price: $\{refprice}</p><p><button class="mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect"><i class="material-icons" id='zillow' onclick='        getComps(appState.mapView.popup.features[0].attributes.zpid);'>business</i></button>Get Comps</p>`,
       fieldInfos: [{
         fieldName: 'refprice',
         label: 'Reference Price',
         format: {
           digitSeparator: true,
           places: 0
-        }
+        },
       }]
     },
     renderer: parcelRenderer,
   });
+
 
   // define class break symbols
   var cl1 = new SimpleFillSymbol({
@@ -243,6 +250,7 @@ require([
     center: [-75.16256149898815, 39.982102298576656],
     components: ['attribution']
   });
+  appState.mapView = mapView;
 
   mapView.then(function() {
     // manually construct to control the order
@@ -273,8 +281,7 @@ require([
     };
 
     //use sizeRendererCreator to configure slider stats and histogram
-    sizeRendererCreator.createContinuousRenderer(sizeParams)
-    .then(function(res) {
+    sizeRendererCreator.createContinuousRenderer(sizeParams).then(function(res) {
       sliderParams.statistics = res.statistics;
       return histogram({
         layer: parcelLyr,
@@ -334,21 +341,11 @@ require([
     ]);
     // when slider range is changed, update the graphics shown in featurelayer (feature service directly)
     on(sizeSlider, 'handle-value-change', function() {
-      parcelLyr.definitionExpression = 'refprice BETWEEN ' + sizeSlider.values[0] + ' AND ' + sizeSlider.values[1];
+      parcelLyr.definitionExpression = `refprice BETWEEN ${sizeSlider.values[0]} AND ${sizeSlider.values[1]}`;
     });
+
   });
 });
-// 
-// mapView.on('click', function(evt){
-//   var screenPoint = {
-//     x: evt.x,
-//     y: evt.y
-//   };
-//   mapView.popup.watch('visible', function(visible) {
-//     console.log('popup visible: ', visible);
-//   });
-//
-// });
 
 /**
 * utility method that synchronizes the viewpoint of a view to other views
@@ -440,7 +437,6 @@ var synchronizeView = function(view, others) {
           }
         }
       }
-
       // bind the views
       synchronizeViews([sceneView, mapView]);
     });
