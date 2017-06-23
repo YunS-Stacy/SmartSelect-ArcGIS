@@ -33,14 +33,15 @@ var getComps = function (zpid) {
             monthlyTrend: result.getElementsByTagName('valueChange')[1].innerHTML > 0 ? 'Price Up' : 'Price Down'
           },
         }
+        document.querySelector('#infoTable').style.visibility='visible';
+        document.querySelector('#infoText').innerHTML=
+            `<strong>Address: </strong>${appState.compsFeature[0].attributes.address}
+            <strong>Last Sold Price: </strong>$${appState.compsFeature[0].attributes.soldPrice}<em>  (${appState.compsFeature[0].attributes.soldDate})</em>
+            <strong>Zestimate: </strong>$${appState.compsFeature[0].attributes.zestimate}
+            <strong>Value Range: </strong>$${appState.compsFeature[0].attributes.valueLow} - $${appState.compsFeature[0].attributes.valueHigh}
+            <strong>Monthly Trend: </strong>${appState.compsFeature[0].attributes.monthlyTrend}`
       };
-      document.querySelector('#infoTable').style.visibility='visible';
-      document.querySelector('#infoText').innerHTML=
-          `<strong>Address: </strong>${appState.compsFeature[0].attributes.address}
-          <strong>Last Sold Price: </strong>$${appState.compsFeature[0].attributes.soldPrice}<em>  (${appState.compsFeature[0].attributes.soldDate})</em>
-          <strong>Zestimate: </strong>$${appState.compsFeature[0].attributes.zestimate}
-          <strong>Value Range: </strong>$${appState.compsFeature[0].attributes.valueLow} - $${appState.compsFeature[0].attributes.valueHigh}
-          <strong>Monthly Trend: </strong>${appState.compsFeature[0].attributes.monthlyTrend}`
+
       resolve(result);
     })
     .catch(err => {
